@@ -2,59 +2,57 @@ package hw2.client;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.ObjectInputStream;
 import java.net.Socket;
-import java.util.LinkedList;
 
-public class Client implements ClientSend {
+public class Client implements ClientSend  {
+   private static ClientRecieve clientRecieve;
+   private static ClientWindow clientWindow;
 
-   private static ClientRecieve msgFromServer;
-   private static ClientSend clientSend;
-
-   private ClientWindow clientWindow;
-
-   static Socket socket;
+   static Socket clientSocket;
    static DataInputStream din;
    static DataOutputStream dout;
-
-   private String _ip, _name;
-   int _port;
-
-   private static LinkedList<String> data1;
+   static ObjectInputStream ois;
 
    public ClientSend getInterface() {
       return this;
    }
 
-   public Client() {
-      clientWindow = new ClientWindow(this);
-      msgFromServer = clientWindow.getInterface();
-      data1 = new LinkedList<>();
-   }
-
-   public void connect(String serverIP, int serverPort, String nickname, String passwd) {
-      this._name = nickname;
-      this._port = serverPort;
+   public static void main(String[] args) {
+      Client myClient =new Client();
+      clientWindow = new ClientWindow(myClient);
+      clientRecieve = clientWindow.getInterface();
       try {
-         // data1.add(nickname);
-         // clientRead.resieveUsers(data1);
-         socket = new Socket(serverIP, clientWindow.getServerPort());
-         din = new DataInputStream(socket.getInputStream());
-         dout = new DataOutputStream(socket.getOutputStream());
+         clientSocket = new Socket(clientWindow.getServerIP(), clientWindow.getServerPort());
+         din = new DataInputStream(clientSocket.getInputStream());
+         //ois = new ObjectInputStream(clientSocket.getInputStream());
+         dout = new DataOutputStream(clientSocket.getOutputStream());
+         clientRecieve.checkConnection("Успешно подключились",true);
+         //dout.writeUTF(clientWindow.getNick());// выслать имя юзера на сервер
          String msgin = "";
-         while (socket.isConnected()) {
+         while (!clientWindow.closed) {
+            // while (!msgin.equals("exit")) {
+                  // получение списка пользователей
+                 /*  try {
+                     clientRecieve.nameListUpdate((String[]) ois.readObject());
+                  } catch (Exception ex) {
+                     System.out.println(ex.getMessage());
+                  } */
             msgin = din.readUTF();
-            msgFromServer.resieveMsg(msgin);
+            clientRecieve.resieveMsg(msgin);
          }
-      } catch (Exception a) {
-         System.out.println("сервер недоступен");
+      } catch (Exception e) {
+         System.out.println(e.getMessage());
+         clientRecieve.checkConnection(e.getMessage(),false);
       }
    }
 
    @Override
-   public void sendtoServer(String msg) {
+   public void sendtoServer(String s) {
       try {
-         dout.writeUTF(msg.trim());
+         dout.writeUTF(s.trim());
       } catch (Exception e) {
+         clientRecieve.checkConnection(e.getMessage(),false);
          System.out.println(e.getMessage());
       }
    }

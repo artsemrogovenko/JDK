@@ -12,7 +12,6 @@ import java.awt.Toolkit;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class ServerWindow implements ServerRecieve {
@@ -50,7 +49,7 @@ public class ServerWindow implements ServerRecieve {
      * остановку сервера, соответственно) и выставлять внутри интерфейса
      * соответствующее булево isServerWorking.
      */
-    public ServerRecieve getInterface() {
+    public ServerRecieve getIntrf() {
         return this;
     }
 
@@ -79,12 +78,10 @@ public class ServerWindow implements ServerRecieve {
         systemMessages.setEditable(false);
     }
 
-    private Server server;
-    private ServerSend msgToClient;
+    private ServerSend serverSend;
 
     public ServerWindow(Server newServer) {
-        this.server = newServer;
-        this.msgToClient = newServer.getInterface();
+        this.serverSend = newServer.getInterface();
         fill();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setBounds(b, a, WIDTH, HEIGHT);
@@ -106,7 +103,6 @@ public class ServerWindow implements ServerRecieve {
                     systemMessages.append("Server is already working" + "\n");
                 } else {
                     isWorked = true;
-                    server.start();
                     System.out.println("Server working status is " + isWorked);
                     systemMessages.append("Server working status is " + isWorked + "\n");
                 }
@@ -120,7 +116,6 @@ public class ServerWindow implements ServerRecieve {
                     systemMessages.append("A server is already stoped" + "\n");
                 } else {
                     isWorked = false;
-                    server.stop();
                     System.out.println("Server working status is " + isWorked);
                     systemMessages.append("Server working status is " + isWorked + "\n");
                 }
@@ -136,7 +131,7 @@ public class ServerWindow implements ServerRecieve {
 
         sendText.addKeyListener(new KeyListener() {
             @Override
-            public void keyReleased(KeyEvent e) {
+            public void keyReleased(java.awt.event.KeyEvent e) {
                 if (e.getKeyCode() == 10) {
                     sendString();
                 }
@@ -145,8 +140,11 @@ public class ServerWindow implements ServerRecieve {
                 }
             }
 
-            @Override public void keyTyped(KeyEvent e) {  }
-            @Override public void keyPressed(KeyEvent e) {  }
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent e) {            }
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {            }
+
         });
 
         systemMessages.addCaretListener(new CaretListener() {
@@ -157,23 +155,24 @@ public class ServerWindow implements ServerRecieve {
         });
     }
 
+    @Override
+    public void getmessage(String s) {
+        systemMessages.append(s+"\n");
+        systemMessages.setCaretPosition(systemMessages.getDocument().getLength());
+    }
+
     public boolean getStatus() {
         return isWorked;
     }
 
     private void sendString() {
-        if (!sendText.getText().equals("") && isWorked) {
-            String out = Logger.getTime() + "Server : " + sendText.getText() + "\n";
-            msgToClient.sendtoClient(out);
-            systemMessages.append(out);
+        if (!sendText.getText().equals("")) {
+            String out = Logger.getTime() + "Server : " + sendText.getText();// + "\n";
+            serverSend.sendtoClient(out);
+            //systemMessages.append(out);
             sendText.setText(null);
             systemMessages.setCaretPosition(systemMessages.getDocument().getLength());
         }
     }
 
-    @Override
-    public void resieveMsg(String str) {
-        systemMessages.append(str + "\n");
-        systemMessages.setCaretPosition(systemMessages.getDocument().getLength());
-    }
 }

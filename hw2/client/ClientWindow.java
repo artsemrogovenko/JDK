@@ -12,7 +12,6 @@ import hw2.Logger;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.util.LinkedList;
 import java.util.Random;
 
 public class ClientWindow implements ClientRecieve{
@@ -30,15 +29,16 @@ public class ClientWindow implements ClientRecieve{
 
     public boolean closed = false;
     public boolean loginIsPressed = false;
-    public boolean connected = false;
+    private boolean connected=false;
 
     private static String[] randomnames = { "Alfred", "Bill", "Brandon", "Calvin", "Dean", "Dustin", "Ethan", "Harold",
-            "Henry", "Irving", "Jason", "Jenssen", "Josh", "Martin", "Nick", "Norm", "Orin", "Pat", "Perry",
-            "Ron", "Shawn", "Tim", "Will ", "Wyatt  " };
+    "Henry", "Irving", "Jason", "Jenssen", "Josh", "Martin", "Nick", "Norm", "Orin", "Pat", "Perry",
+    "Ron", "Shawn", "Tim", "Will", "Wyatt" };
 
-    JList<String> users = new JList<String>();
+    //private final String[] data1 = { "Юки", "Дуглас", "Оникс", "Симба", "Норман" };
+    JList<String> users = new JList<String>(); //поле участников
 
-    private static JFrame frame = new JFrame("Chat client");
+    private static JFrame frame = new JFrame("Chat Client");
     private static JButton login = new JButton("Login");
     private static JButton send = new JButton("Send");
 
@@ -60,21 +60,6 @@ public class ClientWindow implements ClientRecieve{
             JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
             JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-    public int getServerPort() {
-        return Integer.parseInt(serverPort.getText());
-    }
-
-    public String getServerIP() {
-        return serverIP.getText();
-    }
-
-    public String getNick() {
-        return nickname.getText();
-    }
-
-    public String getPass() {
-        return passwd.getText();
-    }
 
     private void fillPanel() {
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -116,18 +101,16 @@ public class ClientWindow implements ClientRecieve{
         bottomPanel.add(send, BorderLayout.EAST);
         centerPanel.add(slog, BorderLayout.CENTER);
         centerPanel.add(users, BorderLayout.EAST);
+        //users.setListData(data1);
     }
     
-    public ClientRecieve getInterface() {
+    public ClientRecieve getInterface(){
         return this;
     }
+    private ClientSend clientSend;
 
-    private Client client;
-    private ClientSend msgToServer;
-    
     public ClientWindow(Client newClient) {
-        this.client = newClient;
-        this.msgToServer=newClient.getInterface();
+        this.clientSend=newClient;
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(WIDTH, HEIGHT);
         frame.setLocationRelativeTo(null);
@@ -140,10 +123,9 @@ public class ClientWindow implements ClientRecieve{
 
         login.addActionListener(new ActionListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {               
+            public void actionPerformed(ActionEvent e) {
                 System.out.println("presed");
                 loginIsPressed = true;
-                connect();             
             }
         });
 
@@ -156,51 +138,74 @@ public class ClientWindow implements ClientRecieve{
             }
         });
 
-        sendText.addKeyListener(new KeyAdapter() {
+        sendText.addKeyListener(new KeyListener() {
             @Override
-            public void keyReleased(KeyEvent e) {
+            public void keyReleased(java.awt.event.KeyEvent e) {
                 if (e.getKeyCode() == 10) {
                     sendString();
                 }
                 if (e.getKeyCode() == 27) {
                     sendText.setText(null);
                 }
-            };
-        });         
-        
-       
+            }
+
+            @Override
+            public void keyTyped(java.awt.event.KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+            }
+
+        });
+
     }
 
     private void sendString() {
-        if (!sendText.getText().equals("") && connected) {
+        if (!sendText.getText().equals("")) {
             String out = Logger.getTime() + nickname.getText() + " : " + sendText.getText() + "\n";
             chatHistory.setCaretPosition(chatHistory.getDocument().getLength());
-            msgToServer.sendtoServer(out);
-            chatHistory.append(out);
+            clientSend.sendtoServer(out);
+            if(connected){
+                chatHistory.append(out);
+            }
             sendText.setText(null);
             Logger.writelog(getNick(),out);
         }
     }
-
+    
     @Override
-    public void resieveMsg(String str) {
-        chatHistory.append(str);
-        Logger.writelog(getNick(),str);
+    public void resieveMsg(String r) {
+        chatHistory.append(r+"\n");
+        Logger.writelog(getNick(),r);
         chatHistory.setCaretPosition(chatHistory.getDocument().getLength());
     }
 
     @Override
-    public void resieveUsers(LinkedList<String> data) {
-        if(connected){
-            String[] names = new String[data.size()];
-            for (int i = 0; i < data.size(); i++) {
-                names[i] = data.get(i);
-            }
-            users.setListData(names);
-        }
-       
+    public void checkConnection(String msg,boolean state) {
+       chatHistory.append(msg+"\n");
+       connected=state;
     }
-private void connect(){
-    client.connect(getServerIP(), getServerPort(), getNick(), getPass()); 
-}
+    
+    public int getServerPort() {
+        return Integer.parseInt(serverPort.getText());
+    }
+
+    public String getServerIP() {
+        return serverIP.getText();
+    }
+
+    public String getNick() {
+        return nickname.getText();
+    }
+
+    public String getPass() {
+        return passwd.getText();
+    }
+
+    @Override
+    public void nameListUpdate(String[] data) {
+        users.setListData(data);
+    }
+
 }

@@ -1,56 +1,44 @@
 package hw2.server;
 
-import java.io.PrintWriter;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.net.Socket;
-import java.util.Scanner;
 
-public class ClientHandler implements Runnable {
+public class ClientHandler extends Thread {
     private Server server;
-    private Socket clientSocket = null;
+    private Socket socket; // сокет, через который сервер общается с клиентом,
+    private DataInputStream in; // поток чтения из сокета
+    private String name;
 
-    private PrintWriter outMessage;
-    private Scanner inMessage;
-    private static int client_count = 0;
-
-    public ClientHandler(Socket socket, Server server) {
-        try {
-            client_count++;
-            this.server = server;
-            this.clientSocket = socket;
-            this.outMessage = new PrintWriter(socket.getOutputStream());
-            this.inMessage = new Scanner(socket.getInputStream());
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-    }
-
-    public void sendMessage(String mes) {
-        outMessage.println(mes);
-        outMessage.flush();
-    }
-
-    public void closeConnetion() {
-        server.removeClient(this);
-        client_count--;
-        server.sendToAll("" + client_count);
+    public ClientHandler(Server parent,Socket socket) throws IOException {
+        this.socket = socket;
+        this.server = parent;
+        in = new DataInputStream(socket.getInputStream()); 
+        this.start(); // вызываем run()     
     }
 
     @Override
-    public void run() {
-        try {
-            server.sendToAll("new client");
+    public void run() {      
+        String word;
+        try {            
+        server.sendHistory(socket);  
+        //server.updateNames(name, true);
+            //this.name = in.readUTF(); //получение имени
             while (true) {
-                String clientmessage = inMessage.nextLine();
-                if (clientmessage.equals("stop")) {
-                    break;
-                }
-                System.out.println(clientmessage);
-                server.sendToAll(clientmessage);
+                word = in.readUTF();
+                server.sendToClients(word, this.socket);
             }
-            Thread.sleep(100);
 
-        } catch (Exception e) {
-            // TODO: handle exception
+        } catch (IOException e) {
         }
     }
+
+    public String getNickname() {
+        return this.name;
+    }
+
+    public Socket getSocket() {
+        return this.socket;
+    }
+
 }

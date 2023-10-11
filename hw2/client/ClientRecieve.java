@@ -1,8 +1,7 @@
 package hw2.client;
 
-import java.util.LinkedList;
-
 public interface ClientRecieve {
-void resieveMsg(String str);
-void resieveUsers(LinkedList<String> data1);
+    void resieveMsg(String str);
+    void checkConnection(String message, boolean b);
+    void nameListUpdate(String[] data);
 }
