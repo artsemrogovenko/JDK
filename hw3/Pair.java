@@ -5,25 +5,25 @@ package hw3;
  * Класс должен иметь методы getFirst(), getSecond() для получения значений каждого из составляющих пары,
  * а также переопределение метода toString(), возвращающее строковое представление пары.
  */
-public class Pair<T> {
-    private T _a, _b;
+public class Pair<T,V> {
+    private T a; 
+    private V b;
 
-    public Pair(T a, T b) {
-        _a = a;
-        _b = b;
+    public Pair(T a, V b) {
+        this.a = a;
+        this.b = b;
     }
 
     public T getFirst() {
-        return (T) String.valueOf(_a);
+        return a;
     }
 
-    public T getSecond() {
-        System.out.println();
-        return (T) String.valueOf(_b);
+    public V getSecond() {
+        return b;
     }
 
     @Override
     public String toString() {
-        return getFirst() + " " + getSecond();
+        return a.toString() + " " + b.toString();
     }
 }
